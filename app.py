@@ -7,7 +7,7 @@ from google import genai
 
 # ====================== CONFIG ======================
 LINK = "https://buy.stripe.com/aFa7sN3E96m71RL9nQ5Ne02"
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
