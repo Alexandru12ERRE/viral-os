@@ -20,13 +20,13 @@ from google.genai import types
 VERSION = "v9"
 LINK = "https://buy.stripe.com/aFa7sN3E96m71RL9nQ5Ne02"
 MODEL = "gemini-flash-latest"  # pointe toujours vers le dernier Flash stable
-FREE_LIMIT = 5  # analyses gratuites par appareil/réseau
-FREE_TTL = 30 * 24 * 3600  # le compteur gratuit se remet à zéro après 30 jours
-PREMIUM_DAILY_LIMIT = 30  # analyses premium par jour (protège ton quota Gemini)
-MAX_VIDEO_SECONDS = 20 * 60  # au-delà, on analyse seulement le titre
-CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # sans 0/O/1/I pour éviter les erreurs
+FREE_LIMIT = 5  # analyses gratuites par appareil/rÃ©seau
+FREE_TTL = 30 * 24 * 3600  # le compteur gratuit se remet Ã  zÃ©ro aprÃ¨s 30 jours
+PREMIUM_DAILY_LIMIT = 30  # analyses premium par jour (protÃ¨ge ton quota Gemini)
+MAX_VIDEO_SECONDS = 20 * 60  # au-delÃ , on analyse seulement le titre
+CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # sans 0/O/1/I pour Ã©viter les erreurs
 
-st.set_page_config(page_title="VIRAL OS", page_icon="🚀", layout="centered")
+st.set_page_config(page_title="VIRAL OS", page_icon="ðŸš€", layout="centered")
 
 
 def get_secret(name):
@@ -46,13 +46,13 @@ UPSTASH_TOKEN = get_secret("UPSTASH_REDIS_REST_TOKEN")
 ID_SALT = get_secret("ID_SALT") or "viral-os"
 
 if not GEMINI_API_KEY:
-    st.error("Clé GEMINI_API_KEY manquante. Ajoute-la dans Manage app → Settings → Secrets.")
+    st.error("ClÃ© GEMINI_API_KEY manquante. Ajoute-la dans Manage app â†’ Settings â†’ Secrets.")
     st.stop()
 
 
 # ====================== STOCKAGE (codes, compteurs) ======================
 class RedisStore:
-    """Stockage permanent via Upstash Redis (gratuit), appelé en HTTPS."""
+    """Stockage permanent via Upstash Redis (gratuit), appelÃ© en HTTPS."""
 
     persistent = True
 
@@ -77,7 +77,7 @@ class RedisStore:
         self._cmd("SADD", "viral:codes", *codes)
 
     def redeem(self, code):
-        # SREM est atomique : un seul visiteur peut obtenir 1, même si deux essaient en même temps
+        # SREM est atomique : un seul visiteur peut obtenir 1, mÃªme si deux essaient en mÃªme temps
         return self._cmd("SREM", "viral:codes", code) == 1
 
     def members(self):
@@ -212,7 +212,7 @@ st.session_state.setdefault("last", None)
 st.session_state.setdefault("admin_ok", False)
 st.session_state.setdefault("sid", secrets.token_hex(8))
 
-# Retrouve l'accès premium après un rafraîchissement grâce au lien ?k=...
+# Retrouve l'accÃ¨s premium aprÃ¨s un rafraÃ®chissement grÃ¢ce au lien ?k=...
 if not st.session_state.is_premium:
     try:
         k = st.query_params.get("k")
@@ -231,9 +231,9 @@ def render(markup):
 
 
 def esc(value):
-    """Échappe le texte venant de YouTube ou de Gemini avant de l'afficher en HTML."""
+    """Ã‰chappe le texte venant de YouTube ou de Gemini avant de l'afficher en HTML."""
     text = html.escape(str(value))
-    text = text.replace("$", "&#36;")  # évite que Streamlit lise $...$ comme des maths
+    text = text.replace("$", "&#36;")  # Ã©vite que Streamlit lise $...$ comme des maths
     return text.replace("\r\n", "\n").replace("\n", "<br>")
 
 
@@ -292,7 +292,7 @@ def extract_video_id(u):
 
 
 def client_id():
-    """Identifiant anonyme (IP hachée) pour limiter les abus. None en local."""
+    """Identifiant anonyme (IP hachÃ©e) pour limiter les abus. None en local."""
     try:
         h = st.context.headers
         ip = (h.get("X-Forwarded-For") or h.get("X-Real-Ip") or "").split(",")[0].strip()
@@ -345,22 +345,22 @@ def register_premium_use():
 
 def redeem_code(raw):
     if too_many_fails("code"):
-        st.error("Trop d'essais. Réessaie dans une heure.")
+        st.error("Trop d'essais. RÃ©essaie dans une heure.")
         return
     code = normalize_code(raw)
     if len(code) != 11:
         register_fail("code")
-        st.error("Code invalide. Il ressemble à VOS-XXXX-XXXX.")
+        st.error("Code invalide. Il ressemble Ã  VOS-XXXX-XXXX.")
         return
     try:
         ok = store.redeem(code)
     except Exception as e:
         print(f"[viral-os] erreur de stockage (activation) : {e!r}")
-        st.error("Service momentanément indisponible, réessaie dans un instant. Ton code n'a pas été utilisé.")
+        st.error("Service momentanÃ©ment indisponible, rÃ©essaie dans un instant. Ton code n'a pas Ã©tÃ© utilisÃ©.")
         return
     if not ok:
         register_fail("code")
-        st.error("Code invalide ou déjà utilisé.")
+        st.error("Code invalide ou dÃ©jÃ  utilisÃ©.")
         return
     token = secrets.token_urlsafe(16)
     if safe(lambda: store.add_token(token) or True, False):
@@ -374,7 +374,7 @@ def redeem_code(raw):
 
 
 def get_video_info(vid, link):
-    """yt-dlp d'abord. Si YouTube bloque le serveur, on se rabat sur oEmbed (sans vues ni durée)."""
+    """yt-dlp d'abord. Si YouTube bloque le serveur, on se rabat sur oEmbed (sans vues ni durÃ©e)."""
     thumb_default = f"https://img.youtube.com/vi/{vid}/hqdefault.jpg"
     try:
         opts = {"quiet": True, "no_warnings": True, "noplaylist": True, "skip_download": True}
@@ -389,7 +389,7 @@ def get_video_info(vid, link):
             "minimal": False,
         }
     except Exception as e:
-        print(f"[viral-os] yt-dlp a échoué, passage à oEmbed : {e!r}")
+        print(f"[viral-os] yt-dlp a Ã©chouÃ©, passage Ã  oEmbed : {e!r}")
     try:
         oembed = "https://www.youtube.com/oembed?format=json&url=" + urllib.parse.quote(link, safe="")
         with urllib.request.urlopen(oembed, timeout=10) as r:
@@ -403,9 +403,9 @@ def get_video_info(vid, link):
             "minimal": False,
         }
     except Exception as e:
-        print(f"[viral-os] oEmbed a échoué aussi : {e!r}")
+        print(f"[viral-os] oEmbed a Ã©chouÃ© aussi : {e!r}")
     return {
-        "title": "Vidéo YouTube",
+        "title": "VidÃ©o YouTube",
         "uploader": "Inconnu",
         "views": 0,
         "thumb": thumb_default,
@@ -424,33 +424,33 @@ def parse_json(raw):
     if isinstance(data, list) and data:
         data = data[0]
     if not isinstance(data, dict):
-        raise ValueError("Réponse Gemini inattendue")
+        raise ValueError("RÃ©ponse Gemini inattendue")
     return data
 
 
 def build_prompt(video, link, use_video):
     if use_video:
         intro = (
-            "Tu es un coach expert en croissance YouTube et TikTok. Regarde réellement cette vidéo "
-            "(image et son) et analyse-la : le hook des 3 premières secondes, le rythme, la rétention, "
-            "la fin et l'appel à l'action."
+            "Tu es un coach expert en croissance YouTube et TikTok. Regarde rÃ©ellement cette vidÃ©o "
+            "(image et son) et analyse-la : le hook des 3 premiÃ¨res secondes, le rythme, la rÃ©tention, "
+            "la fin et l'appel Ã  l'action."
         )
     else:
         intro = (
-            "Tu es un coach expert en croissance YouTube et TikTok. Tu n'as accès qu'au titre, "
-            "à la chaîne et au nombre de vues, pas à la vidéo : estime au mieux à partir de ça."
+            "Tu es un coach expert en croissance YouTube et TikTok. Tu n'as accÃ¨s qu'au titre, "
+            "Ã  la chaÃ®ne et au nombre de vues, pas Ã  la vidÃ©o : estime au mieux Ã  partir de Ã§a."
         )
     views = f"{video['views']:,}".replace(",", " ") if video["views"] else "inconnu"
     return f"""{intro}
 
 Titre : {video['title']}
-Chaîne : {video['uploader']}
+ChaÃ®ne : {video['uploader']}
 Vues : {views}
 URL : {link}
 
-Réponds en français, UNIQUEMENT avec un JSON valide contenant exactement ces clés :
+RÃ©ponds en franÃ§ais, UNIQUEMENT avec un JSON valide contenant exactement ces clÃ©s :
 {{
-  "resume": "de quoi parle la vidéo, en 1 ou 2 phrases",
+  "resume": "de quoi parle la vidÃ©o, en 1 ou 2 phrases",
   "hook_score": nombre entre 0 et 100,
   "retention_score": nombre entre 0 et 100,
   "cta_score": nombre entre 0 et 100,
@@ -458,14 +458,14 @@ Réponds en français, UNIQUEMENT avec un JSON valide contenant exactement ces c
   "strengths": ["force 1", "force 2"],
   "weaknesses": ["faiblesse 1", "faiblesse 2"],
   "hooks_alternatifs": ["accroche 1", "accroche 2", "accroche 3"],
-  "script_0_60": "script complet seconde par seconde de 0 à 60 secondes d'une version améliorée, prêt à lire",
+  "script_0_60": "script complet seconde par seconde de 0 Ã  60 secondes d'une version amÃ©liorÃ©e, prÃªt Ã  lire",
   "montage": "instructions de montage courtes et claires, avec des mots simples",
-  "title_suggestion": "titre optimisé",
+  "title_suggestion": "titre optimisÃ©",
   "hashtags": "#tag1 #tag2 #tag3 #tag4",
   "plan_action": ["action 1", "action 2", "action 3"]
 }}
-Les accroches alternatives sont des phrases à dire dans les 3 premières secondes.
-Le plan d'action contient 3 actions concrètes à faire avant de publier ou republier.
+Les accroches alternatives sont des phrases Ã  dire dans les 3 premiÃ¨res secondes.
+Le plan d'action contient 3 actions concrÃ¨tes Ã  faire avant de publier ou republier.
 Sois ultra concret, direct et utile.
 """
 
@@ -474,7 +474,7 @@ def make_config(use_video):
     kwargs = {"response_mime_type": "application/json"}
     if use_video:
         try:
-            # résolution basse = beaucoup moins cher pour analyser une vidéo
+            # rÃ©solution basse = beaucoup moins cher pour analyser une vidÃ©o
             return types.GenerateContentConfig(
                 media_resolution=types.MediaResolution.MEDIA_RESOLUTION_LOW, **kwargs
             )
@@ -511,10 +511,10 @@ def plan_text(video, data):
     lines = [
         "VIRAL OS - TON PLAN POUR PERCER",
         "",
-        f"Vidéo : {video['title']} ({video['uploader']})",
+        f"VidÃ©o : {video['title']} ({video['uploader']})",
         f"Score viral : {score}/100",
         "",
-        "TITRE À METTRE :",
+        "TITRE Ã€ METTRE :",
         str(data.get("title_suggestion") or video["title"]),
         "",
         "HASHTAGS :",
@@ -523,7 +523,7 @@ def plan_text(video, data):
         "ACCROCHES ALTERNATIVES :",
         *[f"{i}. {h}" for i, h in enumerate(hooks, 1)],
         "",
-        "SCRIPT (0 à 60 secondes) :",
+        "SCRIPT (0 Ã  60 secondes) :",
         str(data.get("script_0_60") or ""),
         "",
         "MONTAGE :",
@@ -570,30 +570,30 @@ render("""
 render(f"""
 <div class="hero">
 <div style="display:flex; justify-content:space-between;">
-<span style="background: rgba(255,255,255,0.15); padding:5px 12px; border-radius:100px; font-size:11px;">✨ INSPIRÉ DE BLOW UP</span>
+<span style="background: rgba(255,255,255,0.15); padding:5px 12px; border-radius:100px; font-size:11px;">âœ¨ INSPIRÃ‰ DE BLOW UP</span>
 <span style="opacity:0.5; font-size:11px;">VIRAL OS {VERSION}</span>
 </div>
-<h1 style="margin:14px 0 4px 0; font-size:32px;">VIRAL OS 🚀</h1>
+<h1 style="margin:14px 0 4px 0; font-size:32px;">VIRAL OS ðŸš€</h1>
 <p style="opacity:0.7; margin:0; font-size:14px;">Colle un lien. On te dit tout ce que tu dois refaire pour percer.</p>
 </div>
 """)
 
-url = st.text_input("Lien YouTube", placeholder="🔗 Colle ton lien YouTube ici...", label_visibility="collapsed")
+url = st.text_input("Lien YouTube", placeholder="ðŸ”— Colle ton lien YouTube ici...", label_visibility="collapsed")
 
 
 # ====================== AFFICHAGE ======================
 def unlock_card():
     render(f"""
 <div class="card" style="text-align:center; border: 2px dashed #d6c7ff;">
-<div style="font-size:40px;">🔒</div>
+<div style="font-size:40px;">ðŸ”’</div>
 <p style="font-weight:800; color:#111; margin:8px 0 4px 0;">SCRIPT COMPLET + MONTAGE + TITRE + 3 ACCROCHES + PLAN D'ACTION</p>
-<p style="color:#888; font-size:12px; margin:0 0 12px 0;">60 secondes mot pour mot, bloqué en premium</p>
+<p style="color:#888; font-size:12px; margin:0 0 12px 0;">60 secondes mot pour mot, bloquÃ© en premium</p>
 <a href="{LINK}" target="_blank" rel="noopener" style="text-decoration:none;">
 <div style="background:black; color:white; padding:14px; border-radius:100px; font-weight:800;">
-🔓 DÉBLOQUER POUR 9,99€
+ðŸ”“ DÃ‰BLOQUER POUR 9,99â‚¬
 </div>
 </a>
-<p style="color:#aaa; font-size:11px; margin-top:8px;">Tu reçois un code, tu l'entres dans la barre latérale. Comme Blow Up mais sans abonnement</p>
+<p style="color:#aaa; font-size:11px; margin-top:8px;">Tu reÃ§ois un code, tu l'entres dans la barre latÃ©rale. Comme Blow Up mais sans abonnement</p>
 </div>
 """)
 
@@ -603,13 +603,13 @@ def show_results(video, data, watched):
     hook = clamp(data.get("hook_score"), 85)
     retention = clamp(data.get("retention_score"), 75)
     cta = clamp(data.get("cta_score"), 50)
-    strengths = n_items(data.get("strengths"), ["Début accrocheur", "Sujet porteur"], 2)
-    weaknesses = n_items(data.get("weaknesses"), ["Rétention moyenne", "Pas de CTA clair"], 2)
+    strengths = n_items(data.get("strengths"), ["DÃ©but accrocheur", "Sujet porteur"], 2)
+    weaknesses = n_items(data.get("weaknesses"), ["RÃ©tention moyenne", "Pas de CTA clair"], 2)
     hooks = n_items(data.get("hooks_alternatifs"), [], 3)
     actions = n_items(data.get("plan_action"), [], 3)
     resume = data.get("resume") or ""
-    script = data.get("script_0_60") or "Script non généré"
-    montage = data.get("montage") or "Montage non généré"
+    script = data.get("script_0_60") or "Script non gÃ©nÃ©rÃ©"
+    montage = data.get("montage") or "Montage non gÃ©nÃ©rÃ©"
     title_sugg = data.get("title_suggestion") or video["title"]
     hashtags = data.get("hashtags") or "#viral #youtube"
 
@@ -619,7 +619,7 @@ def show_results(video, data, watched):
         views_txt = f"{views:,}".replace(",", " ")
         views_badge = (
             '<span style="background:#ede9fe; color:#6d28d9; padding:4px 10px; border-radius:100px; '
-            f'font-size:11px; font-weight:700;">🔥 {views_txt} VUES</span>'
+            f'font-size:11px; font-weight:700;">ðŸ”¥ {views_txt} VUES</span>'
         )
     viral_badge = ""
     if views >= 100_000:
@@ -627,7 +627,7 @@ def show_results(video, data, watched):
             '<span style="background:#dcfce7; color:#15803d; padding:4px 10px; border-radius:100px; '
             'font-size:11px; font-weight:700;">VIRAL</span>'
         )
-    mode_txt = "🎥 Vidéo analysée" if watched else "📝 Analyse du titre"
+    mode_txt = "ðŸŽ¥ VidÃ©o analysÃ©e" if watched else "ðŸ“ Analyse du titre"
     mode_badge = (
         '<span style="background:#f3f4f6; color:#374151; padding:4px 10px; border-radius:100px; '
         f'font-size:11px; font-weight:700;">{mode_txt}</span>'
@@ -677,7 +677,7 @@ def show_results(video, data, watched):
 </div>
 </div>
 <div style="margin-bottom:8px;">
-<span style="font-size:12px; color:#111;">Rétention</span>
+<span style="font-size:12px; color:#111;">RÃ©tention</span>
 <div style="background:#eee; height:6px; border-radius:10px; margin-top:4px;">
 <div style="background:#22c55e; width:{retention}%; height:6px; border-radius:10px;"></div>
 </div>
@@ -693,17 +693,17 @@ def show_results(video, data, watched):
 
     render(f"""
 <div class="card">
-<p style="font-size:11px; font-weight:800; color:#999; letter-spacing:1px; margin:0 0 12px 0;">CE QUE GEMINI A DÉTECTÉ</p>
+<p style="font-size:11px; font-weight:800; color:#999; letter-spacing:1px; margin:0 0 12px 0;">CE QUE GEMINI A DÃ‰TECTÃ‰</p>
 <div style="display:flex; gap:16px;">
 <div style="flex:1;">
-<p style="color:#16a34a; font-weight:800; font-size:13px; margin:0 0 6px 0;">✅ FORCES</p>
-<p style="color:#111; font-size:13px; margin:3px 0;">• {esc(strengths[0])}</p>
-<p style="color:#111; font-size:13px; margin:3px 0;">• {esc(strengths[1])}</p>
+<p style="color:#16a34a; font-weight:800; font-size:13px; margin:0 0 6px 0;">âœ… FORCES</p>
+<p style="color:#111; font-size:13px; margin:3px 0;">â€¢ {esc(strengths[0])}</p>
+<p style="color:#111; font-size:13px; margin:3px 0;">â€¢ {esc(strengths[1])}</p>
 </div>
 <div style="flex:1;">
-<p style="color:#dc2626; font-weight:800; font-size:13px; margin:0 0 6px 0;">⚠️ FAIBLESSES</p>
-<p style="color:#111; font-size:13px; margin:3px 0;">• {esc(weaknesses[0])}</p>
-<p style="color:#111; font-size:13px; margin:3px 0;">• {esc(weaknesses[1])}</p>
+<p style="color:#dc2626; font-weight:800; font-size:13px; margin:0 0 6px 0;">âš ï¸ FAIBLESSES</p>
+<p style="color:#111; font-size:13px; margin:3px 0;">â€¢ {esc(weaknesses[0])}</p>
+<p style="color:#111; font-size:13px; margin:3px 0;">â€¢ {esc(weaknesses[1])}</p>
 </div>
 </div>
 </div>
@@ -714,51 +714,51 @@ def show_results(video, data, watched):
         return
 
     target = max(score, min(97, score + 12))
-    hooks_html = "<br>".join(f"<b>{i}.</b> {esc(h)}" for i, h in enumerate(hooks, 1)) or "—"
-    actions_html = "<br>".join(f"<b>{i}.</b> {esc(a)}" for i, a in enumerate(actions, 1)) or "—"
+    hooks_html = "<br>".join(f"<b>{i}.</b> {esc(h)}" for i, h in enumerate(hooks, 1)) or "â€”"
+    actions_html = "<br>".join(f"<b>{i}.</b> {esc(a)}" for i, a in enumerate(actions, 1)) or "â€”"
     render(f"""
 <div class="card" style="border: 2px solid #8b5cf6;">
 <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
-<div style="background: linear-gradient(135deg, #8b5cf6, #60a5fa); width:32px; height:32px; border-radius:100px; display:flex; align-items:center; justify-content:center;">🚀</div>
+<div style="background: linear-gradient(135deg, #8b5cf6, #60a5fa); width:32px; height:32px; border-radius:100px; display:flex; align-items:center; justify-content:center;">ðŸš€</div>
 <p style="font-weight:900; color:#111; margin:0; font-size:17px;">TON PLAN POUR PERCER</p>
 <span style="margin-left:auto; background:#22c55e; color:white; padding:4px 12px; border-radius:100px; font-size:12px; font-weight:800;">PREMIUM</span>
 </div>
 <div style="background:#fff7ed; border-radius:16px; padding:18px; margin-bottom:16px;">
-<p style="color:#c2410c; font-weight:800; font-size:14px; margin:0 0 12px 0;">⚡ 3 ACCROCHES POUR LES 3 PREMIÈRES SECONDES</p>
+<p style="color:#c2410c; font-weight:800; font-size:14px; margin:0 0 12px 0;">âš¡ 3 ACCROCHES POUR LES 3 PREMIÃˆRES SECONDES</p>
 <p style="color:#111; font-size:15px; line-height:1.65; margin:0;">{hooks_html}</p>
 </div>
 <div style="background:#f5f3ff; border-radius:16px; padding:18px; margin-bottom:16px;">
-<p style="color:#6d28d9; font-weight:800; font-size:14px; margin:0 0 12px 0;">📝 SCRIPT À DIRE (0 à 60 secondes)</p>
+<p style="color:#6d28d9; font-weight:800; font-size:14px; margin:0 0 12px 0;">ðŸ“ SCRIPT Ã€ DIRE (0 Ã  60 secondes)</p>
 <p style="color:#111; font-size:15px; line-height:1.65; margin:0;">{esc(script)}</p>
 </div>
 <div style="background:#eff6ff; border-radius:16px; padding:18px; margin-bottom:16px;">
-<p style="color:#1d4ed8; font-weight:800; font-size:14px; margin:0 0 10px 0;">🎬 COMMENT MONTER LA VIDÉO</p>
+<p style="color:#1d4ed8; font-weight:800; font-size:14px; margin:0 0 10px 0;">ðŸŽ¬ COMMENT MONTER LA VIDÃ‰O</p>
 <p style="color:#111; font-size:15px; margin:0; line-height:1.6;">{esc(montage)}</p>
 </div>
 <div style="background:#f0fdf4; border-radius:16px; padding:18px; margin-bottom:16px;">
-<p style="color:#15803d; font-weight:800; font-size:14px; margin:0 0 12px 0;">📌 TITRE ET HASHTAGS</p>
+<p style="color:#15803d; font-weight:800; font-size:14px; margin:0 0 12px 0;">ðŸ“Œ TITRE ET HASHTAGS</p>
 <p style="color:#111; font-size:15px; margin:0 0 8px 0;">
-<b>Titre à mettre :</b><br>
+<b>Titre Ã  mettre :</b><br>
 {esc(title_sugg)}
 </p>
 <p style="color:#111; font-size:15px; margin:12px 0 0 0;">
-<b>Hashtags à mettre :</b><br>
+<b>Hashtags Ã  mettre :</b><br>
 {esc(hashtags)}
 </p>
 </div>
 <div style="background:#fef2f2; border-radius:16px; padding:18px; margin-bottom:16px;">
-<p style="color:#b91c1c; font-weight:800; font-size:14px; margin:0 0 12px 0;">✅ PLAN D'ACTION AVANT DE PUBLIER</p>
+<p style="color:#b91c1c; font-weight:800; font-size:14px; margin:0 0 12px 0;">âœ… PLAN D'ACTION AVANT DE PUBLIER</p>
 <p style="color:#111; font-size:15px; line-height:1.65; margin:0;">{actions_html}</p>
 </div>
 <div style="background:black; border-radius:14px; padding:16px; text-align:center;">
 <p style="color:white; margin:0; font-weight:800; font-size:16px;">
-Score actuel : {score}% → Possible d’atteindre {target}%
+Score actuel : {score}% â†’ Possible dâ€™atteindre {target}%
 </p>
 </div>
 </div>
 """)
     st.download_button(
-        "⬇️ Télécharger mon plan (.txt)",
+        "â¬‡ï¸ TÃ©lÃ©charger mon plan (.txt)",
         data=plan_text(video, data),
         file_name="viral-os-plan.txt",
         mime="text/plain",
@@ -777,17 +777,17 @@ def analyze(raw_url):
         return
     vid = extract_video_id(link)
     if not vid:
-        st.warning("Colle le lien d'une vidéo (pas d'une chaîne ou d'une playlist).")
+        st.warning("Colle le lien d'une vidÃ©o (pas d'une chaÃ®ne ou d'une playlist).")
         return
     link = f"https://www.youtube.com/watch?v={vid}"
 
     premium = st.session_state.is_premium
     if not premium and free_used() >= FREE_LIMIT:
-        st.warning(f"Tu as utilisé tes {FREE_LIMIT} analyses gratuites.")
+        st.warning(f"Tu as utilisÃ© tes {FREE_LIMIT} analyses gratuites.")
         unlock_card()
         return
     if premium and premium_used_today() >= PREMIUM_DAILY_LIMIT:
-        st.warning(f"Tu as atteint la limite de {PREMIUM_DAILY_LIMIT} analyses aujourd'hui. Reviens demain 🙂")
+        st.warning(f"Tu as atteint la limite de {PREMIUM_DAILY_LIMIT} analyses aujourd'hui. Reviens demain ðŸ™‚")
         return
 
     with st.spinner("Analyse en cours avec Gemini..."):
@@ -801,7 +801,7 @@ def analyze(raw_url):
                 data = ask_gemini(video, link, True)
                 watched = True
             except Exception as e:
-                print(f"[viral-os] analyse vidéo impossible, repli sur le titre : {e!r}")
+                print(f"[viral-os] analyse vidÃ©o impossible, repli sur le titre : {e!r}")
 
         if data is None and not video["minimal"]:
             try:
@@ -810,7 +810,7 @@ def analyze(raw_url):
                 print(f"[viral-os] erreur d'analyse : {e!r}")
 
     if data is None:
-        st.error("Impossible d'analyser cette vidéo pour le moment. Réessaie dans un instant ou essaie un autre lien.")
+        st.error("Impossible d'analyser cette vidÃ©o pour le moment. RÃ©essaie dans un instant ou essaie un autre lien.")
         return
 
     if premium:
@@ -824,7 +824,7 @@ def analyze(raw_url):
     )
 
 
-if st.button("Analyser ma vidéo →", use_container_width=True, type="primary"):
+if st.button("Analyser ma vidÃ©o â†’", use_container_width=True, type="primary"):
     if not url.strip():
         st.warning("Colle un lien d'abord")
     else:
@@ -836,10 +836,10 @@ if st.session_state.last:
 # ====================== SIDEBAR ======================
 with st.sidebar:
     if st.session_state.is_premium:
-        st.write("**Premium actif ✅**")
+        st.write("**Premium actif âœ…**")
         st.caption(f"{premium_used_today()}/{PREMIUM_DAILY_LIMIT} analyses aujourd'hui")
         if st.session_state.token:
-            st.caption("Mets cette page en favori : le lien garde ton accès premium.")
+            st.caption("Mets cette page en favori : le lien garde ton accÃ¨s premium.")
     else:
         st.write(f"**{min(free_used(), FREE_LIMIT)}/{FREE_LIMIT} gratuites**")
         code_in = st.text_input("Code", placeholder="VOS-XXXX-XXXX", max_chars=24, key="code_input")
@@ -848,9 +848,9 @@ with st.sidebar:
 
     if st.session_state.history:
         st.divider()
-        st.caption("Dernières analyses")
+        st.caption("DerniÃ¨res analyses")
         for item in reversed(st.session_state.history[-5:]):
-            st.caption(f"{item['score']}/100 · {item['title'][:40]}".replace("$", "\\$"))
+            st.caption(f"{item['score']}/100 Â· {item['title'][:40]}".replace("$", "\\$"))
 
     # Panneau admin : visible seulement avec ?admin=1 dans l'adresse
     try:
@@ -859,14 +859,14 @@ with st.sidebar:
         show_admin = False
     if show_admin:
         st.divider()
-        with st.expander("🔧 Admin"):
+        with st.expander("ðŸ”§ Admin"):
             if not ADMIN_PASSWORD:
                 st.caption("Ajoute ADMIN_PASSWORD dans les Secrets pour activer ce panneau.")
             elif not st.session_state.admin_ok:
                 pwd = st.text_input("Mot de passe admin", type="password", key="admin_pwd")
                 if st.button("Connexion"):
                     if too_many_fails("admin"):
-                        st.error("Trop d'essais. Réessaie dans une heure.")
+                        st.error("Trop d'essais. RÃ©essaie dans une heure.")
                     elif hmac.compare_digest(pwd.encode(), ADMIN_PASSWORD.encode()):
                         st.session_state.admin_ok = True
                         st.rerun()
@@ -876,13 +876,13 @@ with st.sidebar:
             else:
                 if not store.persistent:
                     st.warning(
-                        "Stockage local : les codes peuvent se réinitialiser quand l'app redémarre. "
+                        "Stockage local : les codes peuvent se rÃ©initialiser quand l'app redÃ©marre. "
                         "Configure Upstash pour un stockage permanent."
                     )
                 remaining = safe(store.count_codes, None)
                 st.write(f"**{remaining if remaining is not None else '?'} codes restants**")
-                n_new = st.number_input("Combien de codes créer ?", min_value=1, max_value=50, value=10, step=1)
-                if st.button("Générer des codes"):
+                n_new = st.number_input("Combien de codes crÃ©er ?", min_value=1, max_value=50, value=10, step=1)
+                if st.button("GÃ©nÃ©rer des codes"):
                     new_codes = generate_codes(int(n_new))
                     if safe(lambda: store.add_codes(new_codes) or True, False):
                         st.session_state.new_codes = [pretty_code(c) for c in new_codes]
@@ -892,11 +892,11 @@ with st.sidebar:
                 if new_codes:
                     st.caption("Nouveaux codes (copie-les maintenant) :")
                     st.code("\n".join(new_codes), language=None)
-                    st.download_button("Télécharger la liste", "\n".join(new_codes), file_name="codes-viral-os.txt")
+                    st.download_button("TÃ©lÃ©charger la liste", "\n".join(new_codes), file_name="codes-viral-os.txt")
                 if st.button("Voir tous les codes restants"):
                     left = safe(store.members, [])
                     st.code("\n".join(pretty_code(c) for c in left) or "(aucun)", language=None)
-                if st.button("Se déconnecter"):
+                if st.button("Se dÃ©connecter"):
                     st.session_state.admin_ok = False
                     st.session_state.new_codes = None
                     st.rerun()
